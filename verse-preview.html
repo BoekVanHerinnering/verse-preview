@@ -69,41 +69,54 @@
     }
 
     async function shareImage() {
-      const card = document.getElementById("verseCard");
-      const previewData = JSON.parse(localStorage.getItem("previewVerse"));
-      if (!previewData) return;
+  const params = new URLSearchParams(window.location.search);
+  const data = params.get("data");
 
-      const { reference, text } = previewData;
-      const shareText = `${reference}\n\n${text}\n\n📥 Download the app:\nhttps://boekvanherinnering.github.io/bibleapp-test/`;
+  if (!data) return;
 
-      try {
-        const canvas = await html2canvas(card);
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        const file = new File([blob], "verse.png", { type: "image/png" });
+  try {
+    const previewData = JSON.parse(decodeURIComponent(data));
+    const { reference, text } = previewData;
+    const shareText = `${reference}\n\n${text}\n\n📥 Download the app:\nhttps://boekvanherinnering.github.io/bibleapp-test/`;
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: "📖 Bible Verse",
-            text: shareText,
-            files: [file]
-          });
-        } else {
-          alert("Sharing is not supported on this device. Try downloading the image instead.");
-        }
-      } catch (err) {
-        console.error("Share failed:", err);
-      }
+    const card = document.getElementById("verseCard");
+    const canvas = await html2canvas(card);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const file = new File([blob], "verse.png", { type: "image/png" });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: "📖 Bible Verse",
+        text: shareText,
+        files: [file]
+      });
+    } else {
+      alert("Sharing is not supported on this device. Try downloading the image instead.");
     }
+  } catch (err) {
+    console.error("Share failed:", err);
+    alert("Could not share the verse.");
+  }
+}
+
 
     function shareViaWhatsApp() {
-      const previewData = JSON.parse(localStorage.getItem("previewVerse"));
-      if (!previewData) return;
+  const params = new URLSearchParams(window.location.search);
+  const data = params.get("data");
 
-      const { text, reference } = previewData;
-      const message = `${reference}\n\n${text}\n\n📥 Download the app:\nhttps://boekvanherinnering.github.io/bibleapp-test/`;
-      const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      window.open(url, "_blank");
-    }
+  if (!data) return;
+
+  try {
+    const previewData = JSON.parse(decodeURIComponent(data));
+    const { text, reference } = previewData;
+    const message = `${reference}\n\n${text}\n\n📥 Download the app:\nhttps://boekvanherinnering.github.io/bibleapp-test/`;
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+  } catch (e) {
+    alert("Could not read verse data for sharing.");
+  }
+}
+
 
     // Load preview verse on page load
     document.addEventListener("DOMContentLoaded", () => {
