@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Verse Share Preview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="verse-preview.css" />
+</head>
+<body>
+
+  <h2>📤 Verse Share Preview</h2>
+
+  <div id="verseCard">
+    <img src="https://boekvanherinnering.github.io/bibleapp/icon.png" alt="App Icon" />
+    <p id="verseReference"></p>
+    <p id="sharePreviewText"></p>
+    <p class="download-link">
+      📥 Download the app:<br />
+      <a href="https://boekvanherinnering.github.io/bibleapp-test/">boekvanherinnering.github.io</a>
+    </p>
+  </div>
+
+  <div class="buttons-container">
+    <button onclick="downloadVerseImage()">📷 Download Image</button><br />
+    <button onclick="shareViaWhatsApp()">🟢 Share on WhatsApp</button><br />
+    <button onclick="shareImage()">📱 Share Image + Text</button>
+  </div>
+
+  <div class="customization-container">
+    <label>🎨 Background:
+      <select onchange="changeCardBackground(this.value)">
+        <option value="#ffffff">White</option>
+        <option value="#f3f3f3">Light Gray</option>
+        <option value="linear-gradient(135deg, #dfe9f3, #ffffff)">Blue Gradient</option>
+        <option value="url('https://source.unsplash.com/350x200/?sky,clouds')">Sky Image</option>
+      </select>
+    </label><br />
+
+    <label>🔤 Font:
+      <select onchange="document.getElementById('sharePreviewText').style.fontFamily = this.value">
+        <option value="serif">Serif</option>
+        <option value="sans-serif">Sans Serif</option>
+        <option value="cursive">Cursive</option>
+        <option value="monospace">Monospace</option>
+      </select>
+    </label><br />
+
+    <label>🔎 Font Size:
+      <input type="range" min="14" max="32" value="18"
+        onchange="document.getElementById('sharePreviewText').style.fontSize = this.value + 'px'" />
+    </label>
+  </div>
+
+  <script>
+    function changeCardBackground(value) {
+      const card = document.getElementById("verseCard");
+      card.style.background = value;
+    }
+
+    function downloadVerseImage() {
+      const card = document.getElementById("verseCard");
+      html2canvas(card).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "verse.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    async function shareImage() {
+      const card = document.getElementById("verseCard");
+      const previewData = JSON.parse(localStorage.getItem("previewVerse"));
+      if (!previewData) return;
+
+      const { reference, text } = previewData;
+      const shareText = `${reference}\n\n${text}\n\n📥 Download the app:\nhttps://boekvanherinnering.github.io/bibleapp-test/`;
+
+      try {
+        const canvas = await html2canvas(card);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const file = new File([blob], "verse.png", { type: "image/png" });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: "📖 Bible Verse",
+            text: shareText,
+            files: [file]
+          });
+        } else {
+          alert("Sharing is not supported on this device. Try downloading the image instead.");
+        }
+      } catch (err) {
+        console.error("Share failed:", err);
+      }
+    }
+
+    function shareViaWhatsApp() {
+      const previewData = JSON.parse(localStorage.getItem("previewVerse"));
+      if (!previewData) return;
+
+      const { text, reference } = previewData;
+      const message = `${reference}\n\n${text}\n\n📥 Download the app:\nhttps://boekvanherinnering.github.io/bibleapp-test/`;
+      const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(url, "_blank");
+    }
+
+    // Load preview
+    const previewData = JSON.parse(localStorage.getItem("previewVerse"));
+    if (previewData) {
+      const { text, reference } = previewData;
+      document.getElementById("verseReference").innerText = reference;
+      document.getElementById("sharePreviewText").innerText = text;
+    }
+  </script>
+
+</body>
+</html>
