@@ -105,13 +105,29 @@
       window.open(url, "_blank");
     }
 
-    // Load preview
-    const previewData = JSON.parse(localStorage.getItem("previewVerse"));
-    if (previewData) {
-      const { text, reference } = previewData;
-      document.getElementById("verseReference").innerText = reference;
-      document.getElementById("sharePreviewText").innerText = text;
+    // Load preview verse on page load
+    document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const data = params.get("data");
+
+  const refEl = document.getElementById("verseReference");
+  const textEl = document.getElementById("sharePreviewText");
+
+  if (data) {
+    try {
+      const previewData = JSON.parse(decodeURIComponent(data));
+      refEl.innerText = previewData.reference;
+      textEl.innerText = previewData.text;
+    } catch (e) {
+      refEl.innerText = "⚠️ Error loading verse";
+      textEl.innerText = "";
     }
+  } else {
+    refEl.innerText = "No verse data found.";
+    textEl.innerText = "";
+  }
+});
+
   </script>
 
 </body>
